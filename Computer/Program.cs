@@ -1,4 +1,6 @@
-﻿namespace Computer;
+﻿using System.Diagnostics;
+
+namespace Computer;
 
 class Program
 {
@@ -20,17 +22,37 @@ class Program
             //0x01,0b11_000_011 // Add register RAX to RBX
         ];
         
+        Array.Copy(test1, Memory, test1.Length);
+        
         
         CPU1 cpu = new CPU1();
-        ((Reg32Ref)cpu.Registers["AX"]["EAX"]).Value = 50; 
-        BinaryReader reader = new BinaryReader(new MemoryStream(test1));
-        var test2 = DecodeInstruction(reader);
-        Console.WriteLine(test2.Execute(cpu));
+        ((Reg32Ref)cpu.Registers["AX"]["EAX"]).Value = 50;
+
+        int instructionPointer = 0;
+        bool running = true;
+
+        do
+        {
+            Span<byte> currentInstruction = Memory;
+            //                                                                           assuming all instructions require 2 bytes ahead
+            currentInstruction = currentInstruction.Slice(instructionPointer, 3);
+            
+            var test2 = DecodeInstruction(currentInstruction);
+            var r = test2.Execute(cpu);
+            instructionPointer += r.InstrPtrAdvance;
+            //                              Max program length is 1024 for now
+            if (instructionPointer >= 1024)
+            {
+                running = false;
+            }
+            Console.WriteLine(r.DebugMessage);
+            
+        } while (running);
     }
 
-    public static Instruction DecodeInstruction(BinaryReader br)
+    public static Instruction DecodeInstruction(Span<byte> bytes)
     {
-        byte opcode = br.ReadByte();
+        byte opcode = bytes[0];
         InstructionCode code;
         switch (opcode)
         {
@@ -45,8 +67,8 @@ class Program
             {
                 case 0x83:
                 {
-                    byte modRM = br.ReadByte();
-                    byte imm = br.ReadByte();
+                    byte modRM = bytes[1];
+                    byte imm = bytes[2];
                     
                     instruction = new AddInstruction(opcode, modRM, imm);
                     break;
@@ -75,7 +97,7 @@ public abstract class Instruction
         Opcode = opcode;
     }
 
-    public abstract string Execute(ICPU cpu);
+    public abstract InstructionReturnData Execute(ICPU cpu);
 }
 
 public class AddInstruction : Instruction
@@ -88,7 +110,7 @@ public class AddInstruction : Instruction
         Src2 = src2;
     }
 
-    public override string Execute(ICPU cpu)
+    public override InstructionReturnData Execute(ICPU cpu)
     {
         switch (Opcode)
         {
@@ -99,13 +121,20 @@ public class AddInstruction : Instruction
                 {
                     IRegister reg = cpu.GetRegisterFromModRM(m.b);
                     reg.Value64 += Src2;
+                    return new(reg.Value64.ToString(), 2);
                 }
                 else throw new NotImplementedException();
                 break;
             }
                 default: throw new NotSupportedException();
         }
-
-        return "";
     }
+}
+
+public record struct InstructionReturnData(string DebugMessage, int InstrPtrAdvance)
+{
+    public string DebugMessage = DebugMessage;
+    public int InstrPtrAdvance = InstrPtrAdvance;
+
+    public override string ToString() => DebugMessage;
 }
