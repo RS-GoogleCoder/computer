@@ -1,4 +1,6 @@
-﻿namespace Computer;
+﻿using System.Text;
+
+namespace Computer;
 
 public interface IRegister
 {
@@ -213,4 +215,60 @@ public class Reg32Ref : IReg32
             Value = (uint)value;
         }
     } 
+}
+
+
+public class FlagsRegister : IReg64
+{
+    // Bit 1 is always 1 on x86; bits 3, 5, 15, and 22-63 are reserved (0)
+    private const ulong AlwaysOneMask  = 1UL << 1;
+    private const ulong ReservedZeroMask = ~((1UL << 3) | (1UL << 5) | (1UL << 15));
+
+    private ulong _value = AlwaysOneMask;
+
+    public ulong Value
+    {
+        get => _value;
+        set => _value = (value | AlwaysOneMask) & ReservedZeroMask;
+    }
+
+    public ulong Value64
+    {
+        get => Value;
+        set => Value = value;
+    }
+
+    // Helper methods for clean get/set
+    private bool GetFlag(CpuFlags flag) => (_value & (ulong)flag) != 0;
+    private void SetFlag(CpuFlags flag, bool state)
+    {
+        if (state) _value |= (ulong)flag;
+        else _value &= ~(ulong)flag;
+    }
+
+    // Ergonomic boolean properties
+    public bool CF { get => GetFlag(CpuFlags.CF); set => SetFlag(CpuFlags.CF, value); }
+    public bool PF { get => GetFlag(CpuFlags.PF); set => SetFlag(CpuFlags.PF, value); }
+    public bool AF { get => GetFlag(CpuFlags.AF); set => SetFlag(CpuFlags.AF, value); }
+    public bool ZF { get => GetFlag(CpuFlags.ZF); set => SetFlag(CpuFlags.ZF, value); }
+    public bool SF { get => GetFlag(CpuFlags.SF); set => SetFlag(CpuFlags.SF, value); }
+    public bool TF { get => GetFlag(CpuFlags.TF); set => SetFlag(CpuFlags.TF, value); }
+    public bool IF { get => GetFlag(CpuFlags.IF); set => SetFlag(CpuFlags.IF, value); }
+    public bool DF { get => GetFlag(CpuFlags.DF); set => SetFlag(CpuFlags.DF, value); }
+    public bool OF { get => GetFlag(CpuFlags.OF); set => SetFlag(CpuFlags.OF, value); }
+
+   
+    public override string ToString()
+    {
+        return $"0x{_value:X4} [" +
+               $"{(OF ? "OF " : "of ")}" +
+               $"{(DF ? "DF " : "df ")}" +
+               $"{(IF ? "IF " : "if ")}" +
+               $"{(TF ? "TF " : "tf ")}" +
+               $"{(SF ? "SF " : "sf ")}" +
+               $"{(ZF ? "ZF " : "zf ")}" +
+               $"{(AF ? "AF " : "af ")}" +
+               $"{(PF ? "PF " : "pf ")}" +
+               $"{(CF ? "CF"  : "cf")}]";
+    }
 }

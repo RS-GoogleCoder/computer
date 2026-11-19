@@ -22,11 +22,25 @@ class Program
             //0x01,0b11_000_011 // Add register RAX to RBX
         ];
         
-        Array.Copy(test1, Memory, test1.Length);
+        byte[] fibbonaci = [
+            0xB9, 0x0A, 0x00, 0x00, 0x00, // mov ecx, 10
+            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0
+            0xBB, 0x01, 0x00, 0x00, 0x00, // mov ebx, 1
+            0x83, 0xF9, 0x00,             // cmp ecx, 0
+            0x74, 0x0A,                   // je +10 (to 0x1E)
+            0x89, 0xC2,                   // mov edx, eax
+            0x01, 0xDA,                   // add edx, ebx
+            0x89, 0xD8,                   // mov eax, ebx
+            0x89, 0xD3,                   // mov ebx, edx
+            0xE2, 0xF6,                   // loop -10 (to 0x14)
+            0xF4                          // hlt
+        ];
+
+        
+        Array.Copy(fibbonaci, Memory, fibbonaci.Length);
         
         
         CPU1 cpu = new CPU1();
-        ((Reg32Ref)cpu.Registers["AX"]["EAX"]).Value = 50;
 
         int instructionPointer = 0;
         bool running = true;
@@ -34,8 +48,8 @@ class Program
         do
         {
             Span<byte> currentInstruction = Memory;
-            //                                                                           assuming all instructions require 2 bytes ahead
-            currentInstruction = currentInstruction.Slice(instructionPointer, 3);
+            //                                                                           assuming all instructions require 8 bytes ahead
+            currentInstruction = currentInstruction.Slice(instructionPointer, 8);
             
             var test2 = DecodeInstruction(currentInstruction);
             var r = test2.Execute(cpu);
@@ -53,88 +67,64 @@ class Program
     public static Instruction DecodeInstruction(Span<byte> bytes)
     {
         byte opcode = bytes[0];
-        InstructionCode code;
+        ModRM modRM = new(bytes[1]);
         switch (opcode)
         {
-            case 0x83: code = InstructionCode.ADD; break;
+            case 0x00:
+            case 0x01:
+            case 0x02:
+            case 0x03:
+            case 0x04:
+            case 0x05:
+            case 0x80:
+            case 0x81:
+            case 0x82:
+            case 0x83: 
+            {
+                if (modRM.Reg == 0)
+                {
+                    return new AddInstruction(opcode, bytes.Slice(1).ToArray());
+                }
+
+                if (modRM.Reg == 7)
+                {
+                    return new CmpInstruction(opcode, bytes.Slice(1).ToArray());
+                }
+
+                throw new NotSupportedException("0x83 opcode with reg " + modRM.Reg + " not supported");
+            }
+            case 0xb8:
+            case 0xb9:
+            case 0xbA:
+            case 0xbB:
+            case 0xbC:
+            case 0xbD:
+            case 0xbE:
+            case 0xbF:
+            {
+                return new MovInstruction(opcode, bytes.Slice(1).ToArray());
+            }
+            case 0x70:
+            case 0x71:
+            case 0x72:
+            case 0x73:
+            case 0x74:
+            case 0x75:
+            case 0x76:
+            case 0x77:
+            case 0x78:
+            case 0x79:
+            case 0x7A:
+            case 0x7B:
+            case 0x7C:
+            case 0x7D:
+            case 0x7E:
+            case 0x7F:
+            {
+                return new JccInstruction(opcode, bytes.Slice(1).ToArray());
+            }
+            
             default: throw new Exception("invalid instruction code: " + opcode);
         }
-
-        Instruction instruction;
-        if (code == InstructionCode.ADD)
-        {
-            switch (opcode)
-            {
-                case 0x83:
-                {
-                    byte modRM = bytes[1];
-                    byte imm = bytes[2];
-                    
-                    instruction = new AddInstruction(opcode, modRM, imm);
-                    break;
-                }
-                default: throw new NotSupportedException();
-            }
-        }
-        else throw new NotSupportedException();
-        return instruction;
     }
-}
-
-public enum InstructionCode
-{
-    ADD 
-}
-
-public abstract class Instruction
-{
-    public InstructionCode Code;
-    public byte Opcode;
-
-    protected Instruction(InstructionCode code, byte opcode)
-    {
-        Code = code;
-        Opcode = opcode;
-    }
-
-    public abstract InstructionReturnData Execute(ICPU cpu);
-}
-
-public class AddInstruction : Instruction
-{
-    public byte Opcode, Src1, Src2;
-    public AddInstruction(byte opcode, byte src1, byte src2) : base(InstructionCode.ADD, opcode)
-    {
-        Opcode = opcode;
-        Src1 = src1;
-        Src2 = src2;
-    }
-
-    public override InstructionReturnData Execute(ICPU cpu)
-    {
-        switch (Opcode)
-        {
-            case 0x83:
-            {
-                ModRM m = new(Src1);
-                if (m.m == ModRM.Mode.Register)
-                {
-                    IRegister reg = cpu.GetRegisterFromModRM(m.b);
-                    reg.Value64 += Src2;
-                    return new(reg.Value64.ToString(), 2);
-                }
-                else throw new NotImplementedException();
-                break;
-            }
-                default: throw new NotSupportedException();
-        }
-    }
-}
-
-public record struct InstructionReturnData(string DebugMessage, int InstrPtrAdvance)
-{
-    public string DebugMessage = DebugMessage;
-    public int InstrPtrAdvance = InstrPtrAdvance;
-
-    public override string ToString() => DebugMessage;
 }
