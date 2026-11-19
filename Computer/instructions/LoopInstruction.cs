@@ -17,9 +17,16 @@ public class LoopInstruction : Instruction
         switch (Opcode)
         {
             case 0xE2:
-            { // jump zero
-                if (cpu.Flags.ZF) return new InstructionReturnData("Jumping", rel);
-                else return new InstructionReturnData("Not jumping", 0);
+            {
+                CPUMode mode = cpu.Mode;
+                if (mode == CPUMode.x32Prot)
+                {
+                    ulong count = cpu.GetRegister("CX", "ECX").Value64 - 1;
+                    bool takeBranch = count > 0;
+                    cpu.GetRegister("CX", "ECX").Value64 = count;
+                    return  new InstructionReturnData("Looping " + rel, takeBranch ? rel + 2 : 2);
+                }
+                else throw new NotSupportedException();
             }
             default: throw new NotSupportedException("");
         }

@@ -18,7 +18,7 @@ public class JccInstruction : Instruction
         {
             case 0x74:
             { // jump zero
-                if (cpu.Flags.ZF) return new InstructionReturnData("Jumping", rel);
+                if (cpu.Flags.ZF) return new InstructionReturnData("Jumping " + rel, rel);
                 else return new InstructionReturnData("Not jumping", 0);
             }
                 default: throw new NotSupportedException("");

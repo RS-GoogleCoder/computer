@@ -79,7 +79,7 @@ class Program
             case 0x80:
             case 0x81:
             case 0x82:
-            case 0x83: 
+            case 0x83:
             {
                 if (modRM.Reg == 0)
                 {
@@ -123,8 +123,13 @@ class Program
             {
                 return new JccInstruction(opcode, bytes.Slice(1).ToArray());
             }
-            
-            default: throw new Exception("invalid instruction code: " + opcode);
+
+            case 0xE2:
+            {
+                return new LoopInstruction(opcode, bytes.Slice(1).ToArray());
+            }
+
+        default: throw new Exception("invalid instruction code: " + opcode);
         }
     }
 }
