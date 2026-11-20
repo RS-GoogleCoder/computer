@@ -132,6 +132,10 @@ public class Program
             {
                 return new MovInstruction(opcode, bytes.Slice(1).ToArray());
             }
+            case 0x41:
+            {
+                return new IncInstruction(opcode, bytes.Slice(1).ToArray());
+            }
             case 0x70:
             case 0x71:
             case 0x72:
