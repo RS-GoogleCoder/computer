@@ -69,6 +69,10 @@ public class CPU1 : ICPU
             0b001 => Registers["CX"]["ECX"],
             0b010 => Registers["DX"]["EDX"],
             0b011 => Registers["BX"]["EBX"],
+            0b100 => Registers["SP"]["ESP"],
+            0b101 => Registers["BP"]["EBP"],
+            0b110 => Registers["SI"]["ESI"],
+            0b111 => Registers["DI"]["EDI"],
             _ => throw new NotSupportedException()
         };
     }

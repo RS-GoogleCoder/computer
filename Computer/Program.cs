@@ -9,12 +9,36 @@ public class Program
     
     static void Main(string[] args)
     {
-        Run(Path.Combine(Directory.GetCurrentDirectory(), "../../../../Computer/programs/fibonacci.bin"));
+        byte[] itoa = [
+            0xBC, 0x00, 0x90, 0x00, 0x00, // mov esp, 0x9000
+            0xB8, 0x39, 0x05, 0x00, 0x00, // mov eax, 1337
+            0xBF, 0x00, 0x20, 0x00, 0x00, // mov edi, 0x2000
+            0xE8, 0x01, 0x00, 0x00, 0x00, // call +1 (to int_to_str)
+            0xF4,                         // hlt
+            0x55,                         // push ebp
+            0x89, 0xE5,                   // mov ebp, esp
+            0xBB, 0x0A, 0x00, 0x00, 0x00, // mov ebx, 10
+            0x31, 0xC9,                   // xor ecx, ecx
+            0x31, 0xD2,                   // xor edx, edx
+            0xF7, 0xF3,                   // div ebx
+            0x80, 0xC2, 0x30,             // add dl, 0x30 ('0')
+            0x66, 0x52,                   // push dx
+            0x41,                         // inc ecx
+            0x85, 0xC0,                   // test eax, eax
+            0x75, 0xF1,                   // jnz -15 (to .divide_loop)
+            0x66, 0x58,                   // pop ax
+            0x88, 0x07,                   // mov [edi], al
+            0x47,                         // inc edi
+            0xE2, 0xF9,                   // loop -7 (to .write_loop)
+            0xC6, 0x07, 0x00,             // mov byte [edi], 0
+            0x5D,                         // pop ebp
+            0xC3                          // ret
+        ];
+        Run(itoa);
     }
 
-    public static void Run(string programPath)
+    public static void Run(byte[] program)
     {
-        byte[] program = File.ReadAllBytes(programPath);
         Array.Copy(program, Memory, program.Length);
         
         
@@ -119,7 +143,10 @@ public class Program
             {
                 return new LoopInstruction(opcode, bytes.Slice(1).ToArray());
             }
-            
+            case 0xE8:
+            {
+                return new CallInstruction(opcode, bytes.Slice(1).ToArray());
+            }
 
         default: throw new Exception("invalid instruction code: " + opcode);
         }

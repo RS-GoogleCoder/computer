@@ -10,7 +10,7 @@ public class Tests
     [Test]
     public void FibonacciTest()
     {
-        Computer.Program.Run(Path.Combine(Directory.GetCurrentDirectory(), "../../../../Computer/programs/fibonacci.bin"));
+        Computer.Program.Run(File.ReadAllBytes(Path.Combine(Directory.GetCurrentDirectory(), "../../../../Computer/programs/fibonacci.bin")));
         Assert.Pass();
     }
 }
