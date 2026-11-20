@@ -5,8 +5,6 @@ namespace Computer;
 
 public class Program
 {
-    public static byte[] Memory = new byte[65536];
-    
     static void Main(string[] args)
     {
         byte[] itoa = [
@@ -39,23 +37,23 @@ public class Program
 
     public static void Run(byte[] program)
     {
-        Array.Copy(program, Memory, program.Length);
+        MemoryController.Init(65536);
+        MemoryController.Set(program, 0, (ulong) program.Length);
         
         
         CPU1 cpu = new CPU1();
 
-        int instructionPointer = 0;
+        ulong instructionPointer = 0;
         bool running = true;
         Stopwatch sw = Stopwatch.StartNew();
         do
         {
-            Span<byte> currentInstruction = Memory;
-            //                                                                           assuming all instructions require 8 bytes ahead
-            currentInstruction = currentInstruction.Slice(instructionPointer, 8);
+            //                                                         assuming all instructions require 8 bytes ahead
+            Span<byte> currentInstruction = MemoryController.Get(instructionPointer, 8);
             
             var test2 = DecodeInstruction(currentInstruction);
             var r = test2.Execute(cpu);
-            instructionPointer += r.InstrPtrAdvance;
+            instructionPointer += (ulong)r.InstrPtrAdvance;
             //                              Max program length is 1024 for now
             if (instructionPointer >= 1024)
             {
@@ -65,7 +63,7 @@ public class Program
             if(r.halt) running = false;
             if(Debugger.IsAttached)
             {
-                Dump.MemoryDump(Memory);
+                Dump.MemoryDump(MemoryController.Get());
                 Dump.RegisterDump(cpu);
             }
         } while (running);
@@ -84,6 +82,15 @@ public class Program
             case 0x00:
             case 0x01:
                 return new AddInstruction(opcode, bytes.Slice(1).ToArray());
+            case 0x50:
+            case 0x51:
+            case 0x52:
+            case 0x53:
+            case 0x54:
+            case 0x55:
+            case 0x56:
+            case 0x57:
+                return new PushInstruction(opcode, bytes.Slice(1).ToArray());
             case 0x02:
             case 0x03:
             case 0x04:
