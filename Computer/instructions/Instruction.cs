@@ -23,10 +23,11 @@ public enum InstructionCode
     CMP,
     Jcc,
     LOOP,
-    INT
+    INT,
+    Hlt
 }
 
-public record struct InstructionReturnData(string DebugMessage, int InstrPtrAdvance)
+public record struct InstructionReturnData(string DebugMessage, int InstrPtrAdvance, bool halt = false)
 {
     public string DebugMessage = DebugMessage;
     public int InstrPtrAdvance = InstrPtrAdvance;

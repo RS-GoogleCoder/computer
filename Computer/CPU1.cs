@@ -2,8 +2,7 @@
 
 public interface ICPU
 {
-    public abstract IRegister GetRegisterFromCode(byte code);
-    public abstract IRegister GetRegisterFromModRM(byte code);
+    public abstract IRegister GetRegisterFromNumber(byte code);
     public abstract IRegister GetRegister(string group, string name);
 }
 
@@ -61,15 +60,15 @@ public class CPU1 : ICPU
     }
 
     
-    public IRegister GetRegisterFromModRM(byte b)
+    public IRegister GetRegisterFromNumber(byte code)
     {
-        byte code =(byte) (b & 0b00111000);
+        if (Mode != CPUMode.x32Prot) throw new NotSupportedException();
         return code switch
         {
-            0b00000000 => Registers["AX"]["RAX"],
-            0b00001000 => Registers["CX"]["RCX"],
-            0b00010000 => Registers["DX"]["RDX"],
-            0b00011000 => Registers["BX"]["RBX"],
+            0b000 => Registers["AX"]["EAX"],
+            0b001 => Registers["CX"]["ECX"],
+            0b010 => Registers["DX"]["EDX"],
+            0b011 => Registers["BX"]["EBX"],
             _ => throw new NotSupportedException()
         };
     }
@@ -78,38 +77,27 @@ public class CPU1 : ICPU
     {
         return Registers[group][name];
     }
-
-    public IRegister GetRegisterFromCode(byte code)
-    {
-        return code switch
-        {
-            0b000 => Registers["AX"]["RAX"],
-            0b001 => Registers["CX"]["RCX"],
-            0b010 => Registers["DX"]["RDX"],
-            0b011 => Registers["BX"]["RBX"],
-            _ => throw new NotSupportedException()
-        };
-    }
-
 }
 
 public struct ModRM
 {
-    public byte b;
-    public readonly Mode m;
+    public byte Raw;
+    public readonly RMMode RMMode;
     public readonly byte Reg;
+    public readonly byte RM;
 
-    public ModRM(byte b)
+    public ModRM(byte raw)
     {
-        this.b = b;
-        byte firstBits =(byte)(b & 0b11000000);
-        byte middleBits = (byte)(b & 0b00111000);
-        m = firstBits switch
+        this.Raw = raw;
+        byte firstBits =(byte)(raw & 0b11000000);
+        byte middleBits = (byte)(raw & 0b00111000);
+        byte endBits = (byte)(raw & 0b00000111);
+        RMMode = firstBits switch
         {
-            0b00000000 => Mode.Memory00,
-            0b01000000 => Mode.Memory01,
-            0b10000000 => Mode.Memory10,
-            0b11000000 => Mode.Register,
+            0b00000000 => RMMode.Memory00,
+            0b01000000 => RMMode.Memory01,
+            0b10000000 => RMMode.Memory10,
+            0b11000000 => RMMode.Register,
             _ => throw new NotSupportedException()
         };
         Reg = middleBits switch
@@ -124,15 +112,27 @@ public struct ModRM
             0b00111000 => 7,
             _ => throw new NotSupportedException()
         };
+        RM =endBits switch
+        {
+            0b00000000 => 0,
+            0b00000001 => 1,
+            0b00000010 => 2,
+            0b00000011 => 3,
+            0b00000100 => 4,
+            0b00000101 => 5,
+            0b00000110 => 6,
+            0b00000111 => 7,
+            _ => throw new NotSupportedException()
+        };
     }
 
-    public enum Mode
-    {
-        Memory00,
-        Memory01,
-        Memory10,
-        Register
-    }
+}
+public enum RMMode
+{
+    Memory00,
+    Memory01,
+    Memory10,
+    Register
 }
 
 public enum CPUMode

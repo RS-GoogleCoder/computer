@@ -27,7 +27,7 @@ public class MovInstruction : Instruction
             case 0xbF:
             {
                 byte r = (byte)(Opcode - 0xb8);
-                IRegister reg = cpu.GetRegisterFromCode(r);
+                IRegister reg = cpu.GetRegisterFromNumber(r);
                 CPUMode mode = cpu.Mode;
                 
                 if (mode == CPUMode.x16Real)
@@ -50,6 +50,18 @@ public class MovInstruction : Instruction
                     return new(reg.Value64.ToString(), 9);
                 }
                 throw new NotSupportedException($"Mode {mode} not supported");
+            }
+            case 0x89:
+            {
+                ModRM m = new ModRM(Src[0]);
+                if (m.RMMode == RMMode.Register)
+                {
+                    IRegister result = cpu.GetRegisterFromNumber(m.RM);
+                    IRegister source = cpu.GetRegisterFromNumber(m.Reg);
+                    result.Value64 = source.Value64;
+                    return new InstructionReturnData(result.Value64.ToString(), 2);
+                }
+                else throw new NotSupportedException("Memory mode not supported");
             }
         }
         throw new Exception();

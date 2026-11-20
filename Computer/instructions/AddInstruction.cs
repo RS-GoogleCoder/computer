@@ -15,8 +15,21 @@ public class AddInstruction : Instruction
     public override InstructionReturnData Execute(ICPU icpu)
     {
         if(icpu is not CPU1 cpu) throw new Exception("CPU not supported");
+        CPUMode mode = cpu.Mode;
         switch (Opcode)
         {
+            case 0x01:
+            {
+                ModRM m = new(Src[0]);
+                if (m.RMMode == RMMode.Register)
+                {
+                    IRegister src1 = cpu.GetRegisterFromNumber(m.RM);
+                    IRegister src2 = cpu.GetRegisterFromNumber(m.Reg);
+                    src1.Value64 += src2.Value64;
+                    return new(src1.Value64.ToString(), 2);
+                }
+                else throw new NotImplementedException("Memory mode not supported");
+            }
             case 0x04:
             {
                 IRegister reg = cpu.GetRegister("A", "AL");
@@ -25,7 +38,6 @@ public class AddInstruction : Instruction
             }
             case 0x05:
             {
-                CPUMode mode = cpu.Mode;
 
                 if (mode == CPUMode.x16Real)
                 {
@@ -55,9 +67,9 @@ public class AddInstruction : Instruction
             case 0x83:
             {
                 ModRM m = new(Src[0]);
-                if (m.m == ModRM.Mode.Register)
+                if (m.RMMode == RMMode.Register)
                 {
-                    IRegister reg = cpu.GetRegisterFromModRM(m.b);
+                    IRegister reg = cpu.GetRegisterFromNumber(m.Raw);
                     reg.Value64 += Src[1];
                     return new(reg.Value64.ToString(), 2);
                 }

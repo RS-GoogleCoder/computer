@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Computer.debugutil;
 
 namespace Computer;
 
@@ -59,8 +60,10 @@ class Program
             {
                 running = false;
             }
-            Console.WriteLine(r.DebugMessage);
-            
+            Console.WriteLine(test2.ToString() + ": " + r.DebugMessage);
+            if(r.halt) running = false;
+            Dump.MemoryDump(Memory);
+            Dump.RegisterDump(cpu);
         } while (running);
     }
 
@@ -70,8 +73,11 @@ class Program
         ModRM modRM = new(bytes[1]);
         switch (opcode)
         {
+            case 0xF4:
+                return new HltInstruction(opcode);
             case 0x00:
             case 0x01:
+                return new AddInstruction(opcode, bytes.Slice(1).ToArray());
             case 0x02:
             case 0x03:
             case 0x04:
@@ -123,11 +129,15 @@ class Program
             {
                 return new JccInstruction(opcode, bytes.Slice(1).ToArray());
             }
-
+            case 0x89:
+            {
+                return new MovInstruction(opcode, bytes.Slice(1).ToArray());
+            }
             case 0xE2:
             {
                 return new LoopInstruction(opcode, bytes.Slice(1).ToArray());
             }
+            
 
         default: throw new Exception("invalid instruction code: " + opcode);
         }
