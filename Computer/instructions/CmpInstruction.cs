@@ -17,12 +17,13 @@ public class CmpInstruction : Instruction
         if(icpu is not CPU1 cpu) throw new Exception("CPU not supported");
         ulong result;
         byte instrPtrAdvance;
+        CPUMode mode = cpu.Mode;
         switch (Opcode)
         {
             case 0x83:
             {
                 ModRM b = new ModRM(Src[0]);
-                IRegister reg = cpu.GetRegisterFromNumber(b.RM);
+                IRegister reg = cpu.GetRegisterFromNumber(b.RM, mode.ToRegisterSize());
                 byte imm = Src[1];
                 result = reg.Value64 - imm;
                 instrPtrAdvance = 3;
@@ -30,12 +31,11 @@ public class CmpInstruction : Instruction
             }
             case 0x81:
             {
-                CPUMode mode = cpu.Mode;
                 if (mode == CPUMode.x16Real)
                 {
                     ushort imm = BinaryPrimitives.ReadUInt16LittleEndian(Src);
                     ModRM b = new ModRM(Src[1]);
-                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg);
+                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg, mode.ToRegisterSize());
                     result = reg.Value64 - imm;
                     instrPtrAdvance = 4;
                 }
@@ -43,7 +43,7 @@ public class CmpInstruction : Instruction
                 {
                     uint imm = BinaryPrimitives.ReadUInt32LittleEndian(Src);
                     ModRM b = new ModRM(Src[1]);
-                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg);
+                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg, mode.ToRegisterSize());
                     result = reg.Value64 - imm;
                     instrPtrAdvance = 6;
                 }
@@ -51,7 +51,7 @@ public class CmpInstruction : Instruction
                 {
                     ulong imm = BinaryPrimitives.ReadUInt64LittleEndian(Src);
                     ModRM b = new ModRM(Src[1]);
-                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg);
+                    IRegister reg = cpu.GetRegisterFromNumber(b.Reg, mode.ToRegisterSize());
                     result = reg.Value64 - imm;
                     instrPtrAdvance = 10;
                 }

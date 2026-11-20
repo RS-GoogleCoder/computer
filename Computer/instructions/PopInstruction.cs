@@ -26,7 +26,7 @@ public class PopInstruction : Instruction
             case 0x56:
             case 0x57:
             {
-                IRegister dest = cpu.GetRegisterFromNumber((byte)(Opcode - 0x50));
+                IRegister dest = cpu.GetRegisterFromNumber((byte)(Opcode - 0x50), mode.ToRegisterSize());
 
                 if (mode == CPUMode.x16Real)
                 {

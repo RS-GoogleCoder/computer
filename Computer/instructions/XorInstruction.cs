@@ -22,8 +22,8 @@ public class XorInstruction : Instruction
         }
         else if (mode == CPUMode.x32Prot)
         {
-            IRegister src1 = cpu.GetRegisterFromNumber(m.RM);
-            IRegister src2 = cpu.GetRegisterFromNumber(m.Reg);
+            IRegister src1 = cpu.GetRegisterFromNumber(m.RM, mode.ToRegisterSize());
+            IRegister src2 = cpu.GetRegisterFromNumber(m.Reg, mode.ToRegisterSize());
             
             ulong result = src1.Value64 ^ src2.Value64;
             src1.Value64 ^= result;

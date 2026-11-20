@@ -19,7 +19,7 @@ public class DivInstruction : Instruction
             case 0xF7:
             {
                 ModRM m = new ModRM(Src[0]);
-                IRegister reg = cpu.GetRegisterFromNumber(m.RM);
+                IRegister reg = cpu.GetRegisterFromNumber(m.RM, mode.ToRegisterSize());
                 if (mode == CPUMode.x32Prot)
                 {
                     IRegister edx = cpu.GetRegister("DX", "EDX");

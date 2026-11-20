@@ -15,6 +15,7 @@ public class MovInstruction : Instruction
     public override InstructionReturnData Execute(ICPU icpu)
     {
         if(icpu is not CPU1 cpu) throw new Exception("CPU not supported");
+        CPUMode mode = cpu.Mode;
         switch (Opcode)
         {
             case 0xb8:
@@ -27,8 +28,7 @@ public class MovInstruction : Instruction
             case 0xbF:
             {
                 byte r = (byte)(Opcode - 0xb8);
-                IRegister reg = cpu.GetRegisterFromNumber(r);
-                CPUMode mode = cpu.Mode;
+                IRegister reg = cpu.GetRegisterFromNumber(r, mode.ToRegisterSize());
                 
                 if (mode == CPUMode.x16Real)
                 {
@@ -56,8 +56,8 @@ public class MovInstruction : Instruction
                 ModRM m = new ModRM(Src[0]);
                 if (m.RMMode == RMMode.Register)
                 {
-                    IRegister result = cpu.GetRegisterFromNumber(m.RM);
-                    IRegister source = cpu.GetRegisterFromNumber(m.Reg);
+                    IRegister result = cpu.GetRegisterFromNumber(m.RM, mode.ToRegisterSize());
+                    IRegister source = cpu.GetRegisterFromNumber(m.Reg, mode.ToRegisterSize());
                     result.Value64 = source.Value64;
                     return new InstructionReturnData(result.Value64.ToString(), 2);
                 }

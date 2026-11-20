@@ -50,9 +50,16 @@ public class Program
         {
             //                                                         assuming all instructions require 8 bytes ahead
             Span<byte> currentInstruction = MemoryController.Get(instructionPointer, 8);
+            if (currentInstruction[0] == 0x66) // mode switch
+            {
+                cpu.SingleInstructionModeSwitch(CPUMode.x16Real);
+                instructionPointer += 1;
+                continue;
+            }
             
             var test2 = DecodeInstruction(currentInstruction);
             var r = test2.Execute(cpu);
+            cpu.SingleInstructionModeSwitchReturn();
             instructionPointer += (ulong)r.InstrPtrAdvance;
             //                              Max program length is 1024 for now
             if (instructionPointer >= 1024)

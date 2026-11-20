@@ -26,11 +26,15 @@ public class PushInstruction : Instruction
             case 0x56:
             case 0x57:
             {
-                IRegister src = cpu.GetRegisterFromNumber((byte)(Opcode - 0x50));
+                IRegister src = cpu.GetRegisterFromNumber((byte)(Opcode - 0x50), mode.ToRegisterSize());
 
                 if (mode == CPUMode.x16Real)
                 {
-                    throw new NotSupportedException();
+                    ushort s = (ushort)src.Value64;
+                    byte[] bytes = BitConverter.GetBytes(s);
+                    MemoryController.Set(bytes, stackPointer.Value64, 2);
+                    stackPointer.Value64 += 2;
+                    return new InstructionReturnData("Added " + s + " to the stack", 1);
                 }
                 else if (mode == CPUMode.x32Prot)
                 {

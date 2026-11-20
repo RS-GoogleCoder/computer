@@ -23,8 +23,8 @@ public class AddInstruction : Instruction
                 ModRM m = new(Src[0]);
                 if (m.RMMode == RMMode.Register)
                 {
-                    IRegister src1 = cpu.GetRegisterFromNumber(m.RM);
-                    IRegister src2 = cpu.GetRegisterFromNumber(m.Reg);
+                    IRegister src1 = cpu.GetRegisterFromNumber(m.RM, mode.ToRegisterSize());
+                    IRegister src2 = cpu.GetRegisterFromNumber(m.Reg, mode.ToRegisterSize());
                     src1.Value64 += src2.Value64;
                     return new(src1.Value64.ToString(), 2);
                 }
@@ -64,14 +64,25 @@ public class AddInstruction : Instruction
 
                 throw new NotSupportedException($"Mode {mode} not supported");
             }
+            case 0x80:
+            {
+                ModRM m = new(Src[0]);
+                if (m.RMMode == RMMode.Register)
+                {
+                    IRegister reg = cpu.GetRegisterFromNumber(m.RM, RegisterSize.x8);
+                    reg.Value64 += Src[1];
+                    return new(reg.Value64.ToString(), 3);
+                }
+                else throw new NotImplementedException("Memory mode not supported");
+            }
             case 0x83:
             {
                 ModRM m = new(Src[0]);
                 if (m.RMMode == RMMode.Register)
                 {
-                    IRegister reg = cpu.GetRegisterFromNumber(m.Raw);
+                    IRegister reg = cpu.GetRegisterFromNumber(m.RM, mode.ToRegisterSize());
                     reg.Value64 += Src[1];
-                    return new(reg.Value64.ToString(), 2);
+                    return new(reg.Value64.ToString(), 3);
                 }
                 else throw new NotImplementedException("Memory mode not supported");
             }

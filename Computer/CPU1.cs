@@ -2,7 +2,7 @@
 
 public interface ICPU
 {
-    public abstract IRegister GetRegisterFromNumber(byte code);
+    public abstract IRegister GetRegisterFromNumber(byte code, RegisterSize size);
     public abstract IRegister GetRegister(string group, string name);
 }
 
@@ -54,32 +54,55 @@ public class CPU1 : ICPU
             {"R"+name, reg64},
             {"E"+name, reg32},
             {name, reg16},
-            {name+"H", reg8High},
-            {name+"L", reg8Low},
+            {name[..^1]+"H", reg8High},
+            {name[..^1]+"L", reg8Low},
         };
     }
 
     
-    public IRegister GetRegisterFromNumber(byte code)
+    public IRegister GetRegisterFromNumber(byte code, RegisterSize size)
     {
-        if (Mode != CPUMode.x32Prot) throw new NotSupportedException();
-        return code switch
+        (string groupName, var group) = code switch
         {
-            0b000 => Registers["AX"]["EAX"],
-            0b001 => Registers["CX"]["ECX"],
-            0b010 => Registers["DX"]["EDX"],
-            0b011 => Registers["BX"]["EBX"],
-            0b100 => Registers["SP"]["ESP"],
-            0b101 => Registers["BP"]["EBP"],
-            0b110 => Registers["SI"]["ESI"],
-            0b111 => Registers["DI"]["EDI"],
+            0b000 => ("AX",Registers["AX"]),
+            0b001 => ("CX",Registers["CX"]),
+            0b010 => ("DX",Registers["DX"]),
+            0b011 => ("BX",Registers["BX"]),
+            0b100 => ("SP",Registers["SP"]),
+            0b101 => ("BP",Registers["BP"]),
+            0b110 => ("SI",Registers["SI"]),
+            0b111 => ("DI",Registers["DI"]),
             _ => throw new NotSupportedException()
         };
+        string name = groupName;
+        if (size == RegisterSize.x8) 
+            name = groupName[0] + "L";
+        else if (size == RegisterSize.x16)
+            name = name;
+        else if (size == RegisterSize.x32)
+            name = "E" + name;
+        else if (size == RegisterSize.x64)
+            name = "R" + name;
+        else throw new NotSupportedException();
+        return group[name];
     }
 
     public IRegister GetRegister(string group, string name)
     {
         return Registers[group][name];
+    }
+
+    private CPUMode? _oldMode;
+    public void SingleInstructionModeSwitch(CPUMode newMode)
+    {
+        _oldMode = Mode;
+        Mode = newMode;
+    }
+
+    public void SingleInstructionModeSwitchReturn()
+    {
+        if(_oldMode.HasValue)
+            Mode = _oldMode.Value;
     }
 }
 
@@ -144,6 +167,28 @@ public enum CPUMode
     x16Real = 2,
     x32Prot = 4,
     x64Long = 8,
+}
+
+public static class CpuModeExtensions
+{
+    public static RegisterSize ToRegisterSize(this CPUMode m)
+    {
+        return m switch
+        {
+            CPUMode.x16Real => RegisterSize.x16,
+            CPUMode.x32Prot => RegisterSize.x32,
+            CPUMode.x64Long => RegisterSize.x64,
+            _ => throw new NotSupportedException()
+        };
+    }
+}
+
+public enum RegisterSize
+{
+    x8,
+    x16,
+    x32,
+    x64
 }
 
 [Flags]
