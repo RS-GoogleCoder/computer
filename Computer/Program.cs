@@ -45,7 +45,7 @@ class Program
 
         int instructionPointer = 0;
         bool running = true;
-
+        Stopwatch sw = Stopwatch.StartNew();
         do
         {
             Span<byte> currentInstruction = Memory;
@@ -62,9 +62,14 @@ class Program
             }
             Console.WriteLine(test2.ToString() + ": " + r.DebugMessage);
             if(r.halt) running = false;
-            Dump.MemoryDump(Memory);
-            Dump.RegisterDump(cpu);
+            if(Debugger.IsAttached)
+            {
+                Dump.MemoryDump(Memory);
+                Dump.RegisterDump(cpu);
+            }
         } while (running);
+        sw.Stop();
+        Console.WriteLine("Program finished in " + sw.Elapsed.TotalMilliseconds + "ms");
     }
 
     public static Instruction DecodeInstruction(Span<byte> bytes)
