@@ -82,6 +82,8 @@ public class Program
             case 0x00:
             case 0x01:
                 return new AddInstruction(opcode, bytes.Slice(1).ToArray());
+            case 0x31:
+                return new XorInstruction(opcode, bytes.Slice(1).ToArray());
             case 0x50:
             case 0x51:
             case 0x52:
