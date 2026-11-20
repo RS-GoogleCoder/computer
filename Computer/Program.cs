@@ -156,6 +156,10 @@ public class Program
             {
                 return new CallInstruction(opcode, bytes.Slice(1).ToArray());
             }
+            case 0xF7:
+            {
+                return new DivInstruction(opcode, bytes.Slice(1).ToArray());
+            }
 
         default: throw new Exception("invalid instruction code: " + opcode);
         }
