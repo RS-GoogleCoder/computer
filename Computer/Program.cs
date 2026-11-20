@@ -3,42 +3,19 @@ using Computer.debugutil;
 
 namespace Computer;
 
-class Program
+public class Program
 {
     public static byte[] Memory = new byte[65536];
     
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        Run(Path.Combine(Directory.GetCurrentDirectory(), "../../../../Computer/programs/fibonacci.bin"));
+    }
 
-        /*
-         * • 01: ADD a Register to a Register or Memory (add [mem]/reg, reg)
-            • 03: ADD a Register or Memory to a Register (add reg, [mem]/reg)
-            • 81 / 83: ADD an Immediate value (constant) to a Register or Memory (add [mem]/reg, imm)
-         */
-        
-        byte[] test1 =
-        [
-            0x83, 0xC0, 0x05, //add 5 to EAX
-            //0x01,0b11_000_011 // Add register RAX to RBX
-        ];
-        
-        byte[] fibbonaci = [
-            0xB9, 0x0A, 0x00, 0x00, 0x00, // mov ecx, 10
-            0xB8, 0x00, 0x00, 0x00, 0x00, // mov eax, 0
-            0xBB, 0x01, 0x00, 0x00, 0x00, // mov ebx, 1
-            0x83, 0xF9, 0x00,             // cmp ecx, 0
-            0x74, 0x0A,                   // je +10 (to 0x1E)
-            0x89, 0xC2,                   // mov edx, eax
-            0x01, 0xDA,                   // add edx, ebx
-            0x89, 0xD8,                   // mov eax, ebx
-            0x89, 0xD3,                   // mov ebx, edx
-            0xE2, 0xF6,                   // loop -10 (to 0x14)
-            0xF4                          // hlt
-        ];
-
-        
-        Array.Copy(fibbonaci, Memory, fibbonaci.Length);
+    public static void Run(string programPath)
+    {
+        byte[] program = File.ReadAllBytes(programPath);
+        Array.Copy(program, Memory, program.Length);
         
         
         CPU1 cpu = new CPU1();
@@ -71,7 +48,7 @@ class Program
         sw.Stop();
         Console.WriteLine("Program finished in " + sw.Elapsed.TotalMilliseconds + "ms");
     }
-
+    
     public static Instruction DecodeInstruction(Span<byte> bytes)
     {
         byte opcode = bytes[0];
