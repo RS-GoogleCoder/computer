@@ -100,6 +100,8 @@ public class Program
             case 0x56:
             case 0x57:
                 return new PushInstruction(opcode, bytes.Slice(1).ToArray());
+            case 0x58:
+                return new PopInstruction(opcode, bytes.Slice(1).ToArray());
             case 0x02:
             case 0x03:
             case 0x04:
@@ -121,6 +123,8 @@ public class Program
 
                 throw new NotSupportedException("0x83 opcode with reg " + modRM.Reg + " not supported");
             }
+            case 0x85:
+                return new TestInstruction(opcode, bytes.Slice(1).ToArray());
             case 0xb8:
             case 0xb9:
             case 0xbA:

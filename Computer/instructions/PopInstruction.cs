@@ -17,24 +17,26 @@ public class PopInstruction : Instruction
         IRegister stackPointer = cpu.GetRegister("SP", "RSP");
         switch (Opcode)
         {
-            case 0x50:
-            case 0x51:
-            case 0x52:
-            case 0x53:
-            case 0x54:
-            case 0x55:
-            case 0x56:
-            case 0x57:
+            case 0x58:
+            case 0x59:
+            case 0x60:
+            case 0x61:
+            case 0x62:
+            case 0x63:
+            case 0x64:
+            case 0x65:
             {
-                IRegister dest = cpu.GetRegisterFromNumber((byte)(Opcode - 0x50), mode.ToRegisterSize());
+                IRegister dest = cpu.GetRegisterFromNumber((byte)(Opcode - 0x58), mode.ToRegisterSize());
 
                 if (mode == CPUMode.x16Real)
                 {
-                    throw new NotSupportedException();
+                    dest.Value64 = BitConverter.ToUInt16(MemoryController.Get(stackPointer.Value64 - 2, 2));
+                    stackPointer.Value64 -= 2;
+                    return new InstructionReturnData("Removed " + dest.Value64 + " from the stack", 1);
                 }
                 else if (mode == CPUMode.x32Prot)
                 {
-                    dest.Value64 = BitConverter.ToUInt64(MemoryController.Get(stackPointer.Value64 - 4, 4));
+                    dest.Value64 = BitConverter.ToUInt32(MemoryController.Get(stackPointer.Value64 - 4, 4));
                     stackPointer.Value64 -= 4;
                     return new InstructionReturnData("Removed " + dest.Value64 + " from the stack", 1);
                 }

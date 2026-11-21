@@ -26,7 +26,7 @@ public class XorInstruction : Instruction
             IRegister src2 = cpu.GetRegisterFromNumber(m.Reg, mode.ToRegisterSize());
             
             ulong result = src1.Value64 ^ src2.Value64;
-            src1.Value64 ^= result;
+            src1.Value64 = result;
             return new InstructionReturnData("XOR", 2);
         }
         else if (mode == CPUMode.x64Long)
