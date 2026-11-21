@@ -4,6 +4,7 @@ public class PushInstruction : Instruction
 {
     public byte Opcode;
     public byte[] Src;
+
     public PushInstruction(byte opcode, byte[] src) : base(InstructionCode.Jcc, opcode)
     {
         Opcode = opcode;
@@ -12,7 +13,7 @@ public class PushInstruction : Instruction
 
     public override InstructionReturnData Execute(ICPU icpu)
     {
-        if(icpu is not CPU1 cpu) throw new Exception("CPU not supported");
+        if (icpu is not CPU1 cpu) throw new Exception("CPU not supported");
         CPUMode mode = cpu.Mode;
         IRegister stackPointer = cpu.GetRegister("SP", "RSP");
         switch (Opcode)
@@ -31,16 +32,18 @@ public class PushInstruction : Instruction
                 if (mode == CPUMode.x16Real)
                 {
                     ushort s = (ushort)src.Value64;
-                    byte[] bytes = BitConverter.GetBytes(s);
-                    MemoryController.Set(bytes, stackPointer.Value64, 2);
+                    MemoryController.Set((byte)s, stackPointer.Value64);
+                    MemoryController.Set((byte)(s >> 8), stackPointer.Value64 + 1);
                     stackPointer.Value64 += 2;
                     return new InstructionReturnData("Added " + s + " to the stack", 1);
                 }
                 else if (mode == CPUMode.x32Prot)
                 {
                     uint s = (uint)src.Value64;
-                    byte[] bytes = BitConverter.GetBytes(s);
-                    MemoryController.Set(bytes, stackPointer.Value64, 4);
+                    MemoryController.Set((byte)s, stackPointer.Value64);
+                    MemoryController.Set((byte)(s >> 8), stackPointer.Value64 + 1);
+                    MemoryController.Set((byte)(s >> 16), stackPointer.Value64 + 2);
+                    MemoryController.Set((byte)(s >> 24), stackPointer.Value64 + 3);
                     stackPointer.Value64 += 4;
                     return new InstructionReturnData("Added " + s + " to the stack", 1);
                 }
@@ -50,7 +53,7 @@ public class PushInstruction : Instruction
                 }
                 else throw new NotSupportedException();
             }
-            default:throw new NotSupportedException();
+            default: throw new NotSupportedException();
         }
     }
 }

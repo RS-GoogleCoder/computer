@@ -11,7 +11,7 @@ public static class MemoryController
 
     public static void Set(byte[] data, ulong startIndex, ulong length)
     {
-        Array.Copy(data, 0, _memory, (long) startIndex, (long) length);
+        Array.Copy(data, 0, _memory, (long)startIndex, (long)length);
     }
 
     public static void Set(byte data, ulong index)
@@ -21,10 +21,10 @@ public static class MemoryController
 
     public static Span<byte> Get(ulong startIndex, ulong length)
     {
-        return new Span<byte>([.. _memory.Skip((int)startIndex).Take((int)length)]);
+        return _memory.AsSpan((int)startIndex, (int)length);
     }
 
     public static byte Get(ulong index) => _memory[index];
-    
+
     public static byte[] Get() => _memory;
 }
